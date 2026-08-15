@@ -9,13 +9,22 @@
 [Uu]serSettings/
 .vs/
 .vscode/
-*.csproj
 *.sln
 *.user
 *.pidb
 *.booproj
 *.svd
 *.unityproj
+
+# Unity'nin KOKTE urettigi IDE projeleri (yeniden uretilir).
+# DIKKAT (0A adim 4 bulgusu): duz `*.csproj` deseni tests/Core.Tests/Core.Tests.csproj
+# dosyasini da yutuyordu ve CI'daki `dotnet test` onu bulamayacakti — desen kok ile
+# sinirlandi, test projesi acikca korunuyor.
+/*.csproj
+!tests/**/*.csproj
+
+# Android build gecici agaci — MAKINE YOLU icerir (PII), depoya girmez
+.utmp/
 
 # .NET test ciktilari
 bin/

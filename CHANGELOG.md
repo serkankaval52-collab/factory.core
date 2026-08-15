@@ -101,3 +101,13 @@ Bu paket [Semantic Versioning](https://semver.org/lang/tr/) kullanır.
   seklindeydi; derleme hatasi ile bagi acik degildi.
 - .meta dosyalari ELLE YAZILMADI: gecici bir Unity projesinde paket yerel klasor olarak
   acilip Unity'ye URETTIRILDI, sonra pakete tasindi (kaynagi olan durum).
+
+## [0.1.6] - 2026-08-15
+
+### Duzeltildi (hello-build zincirinin yakaladigi iki .gitignore kusuru)
+- `*.csproj` deseni `tests/Core.Tests/Core.Tests.csproj` dosyasini da yutuyordu —
+  CI'daki `dotnet test` onu bulamayacakti (test workflow'u KESIN kirmizi olurdu).
+  Desen `/*.csproj` ile koke sinirlandi; `!tests/**/*.csproj` ile test projesi
+  acikca korunuyor.
+- `.utmp/` (Android build gecici agaci) ignore edilmiyordu ve MAKINE YOLU iceriyor —
+  PII sizintisi riskiydi; staged dosya sayisi 128'den 86'ya dustu.
