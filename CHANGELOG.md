@@ -140,3 +140,11 @@ Bu paket [Semantic Versioning](https://semver.org/lang/tr/) kullanır.
   ve .gitattributes eklendi ama sapma SURDU: gercek neden yukaridaki sema guncellemesiydi.
   Ilk teshis YANLISTI. Normalize hash + .gitattributes yine de KALIYOR (ileriye donuk
   onlem), ancak gerekcesi duzeltildi.
+
+## [Kayit] - 2026-08-15
+
+### Kapanan izleme maddesi
+- v0.1.3'te acilan "CVD kirpma (clamp) siphesi" KAPANDI: mimar tam-hex tekrariyla
+  executor degerlerini son basamaga kadar uretti (83,13 / 1,26 / 19,57 / 47,46).
+  Sapmanin kaynagi mimarin tarama scriptindeki girdi yuvarlamasiydi; matriste,
+  kirpmada ve kapida kusur YOK. Kod degisikligi gerekmedi (bu yuzden yeni surum de yok).
