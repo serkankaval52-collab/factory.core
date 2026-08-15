@@ -89,3 +89,15 @@ Bu paket [Semantic Versioning](https://semver.org/lang/tr/) kullanır.
 ### Bilinen sinir (kayitli)
 - DIL-KAPISI tek kelimelik gorunur dizeleri elemez; cok kelime kurali teknik dizeleri
   yanlis pozitiften korumak icindir. Bosluk kabul edilmis ve rapora yazilmistir.
+
+## [0.1.5] - 2026-08-15
+
+### Duzeltildi
+- **UPM paketine .meta dosyalari eklendi** (0A adim 4 zincirinin yakaladigi KRITIK bulgu):
+  meta'siz paket Unity tarafindan sessizce yok sayiliyordu — `Runtime/FactoryGames.Core.asmdef`
+  ithal edilmedigi icin assembly hic dogmuyor ve tuketen proje
+  `error CS0246: FactoryGames namespace bulunamadi` ile duyuyordu. Unity uyarisi
+  yalnizca `has no meta file, but it's in an immutable folder. The asset will be ignored.`
+  seklindeydi; derleme hatasi ile bagi acik degildi.
+- .meta dosyalari ELLE YAZILMADI: gecici bir Unity projesinde paket yerel klasor olarak
+  acilip Unity'ye URETTIRILDI, sonra pakete tasindi (kaynagi olan durum).
