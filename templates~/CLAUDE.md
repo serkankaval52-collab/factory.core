@@ -20,8 +20,12 @@ açılmaz. Fabrika belgelerine **public linkten** bakılır — fabrika klonu bu
    `FindFirstObjectByType` / `Camera.main` **yasak** — bağlama kurulum anında açık atamayla.
 5. Prefab yalnız varlık olarak ve yalnız `Assets/Prefabs/` altında (kod-standardi §10:
    idempotent Dump→Apply; elle YAML yok).
-6. Motor ayarları `factory.core/templates` preset setinden **kopyadır**; elle ayar
+6. Motor ayarları `factory.core/templates~` preset setinden **kopyadır**; elle ayar
    "kaynağı olmayan durum"dur ve `PRESET-SAPMA` kapısı onu kırmızı yakar.
+   **Sahne eklemek şablon düzeyinde bir karardır, sessizce yapılamaz:** build listesine
+   ikinci sahne eklemek iki kapıyı birden yakar (`TEK-KAYNAK` + `PRESET-SAPMA`, çünkü
+   `EditorBuildSettings.asset` hem build listesinin kaynağı hem preset setinin üyesidir)
+   ve preset setinin güncellenmesini gerektirir. Bu çift savunma bilinçlidir (0A adım 5).
 7. Saf mantık Unity API'siz yazılır (`Assets/Scripts/Core/`) — CI'da Unity olmadan
    `dotnet test` ile koşar. Sahneye/UI'a yazan sınıf iş kuralı içermez.
 8. Gevşek bağlılık C# `event`/`Action` ile; `UnityEvent` yasak.

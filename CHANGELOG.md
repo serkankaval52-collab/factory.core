@@ -148,3 +148,9 @@ Bu paket [Semantic Versioning](https://semver.org/lang/tr/) kullanır.
   executor degerlerini son basamaga kadar uretti (83,13 / 1,26 / 19,57 / 47,46).
   Sapmanin kaynagi mimarin tarama scriptindeki girdi yuvarlamasiydi; matriste,
   kirpmada ve kapida kusur YOK. Kod degisikligi gerekmedi (bu yuzden yeni surum de yok).
+
+### Karar kaydi (mimar, 2026-08-15)
+- 0A adim 5 bulgusu: EditorBuildSettings.asset iki sapkalidir (build listesi kaynagi +
+  preset seti uyesi), bu yuzden ikinci sahne eklemek TEK-KAYNAK ve PRESET-SAPMA
+  kapilarini birlikte yakar. CIFT SAVUNMA KALIYOR — sahne eklemek sablon duzeyinde
+  karardir, sessizce yapilamaz. templates~/CLAUDE.md kural 6'ya islendi (kod yok, tag yok).
