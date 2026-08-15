@@ -57,3 +57,20 @@ Bu paket [Semantic Versioning](https://semver.org/lang/tr/) kullanır.
 - `__pycache__` depodan cikarildi ve gitignore'a alindi (kendi HAM-ARTEFAKT
   disiplinimizin geregi — 0A denetim bulgusu).
 - Lint'lerdeki kapatilmamis dosya tutamaclari (`-W error::ResourceWarning` temiz).
+
+## [0.1.3] - 2026-08-15
+
+### Degisti
+- CVD test kilitleri mimar denetimine gore yeniden duzenlendi: `#E74C3C`/`#E85142`
+  testi "NORMAL TABAN" olarak damgalandi (CVD disleri degil, normal gorus tabani).
+
+### Eklendi
+- `test_CVD_KILIDI_karisim_metameri_protanopide_KIRMIZI`: asil CVD kilidi —
+  `#C64040`/`#33FF00` normal 83.13 iken protanopide 1.26; kapi KIRMIZI vermek zorunda.
+- `test_es_L_kirmizi_yesil_de_cokusmuyor`: es-parlaklik ciftlerinde cokus olmadiginin
+  regresyon kilidi.
+- Toplam 15 -> 17 test.
+
+### Karar kaydi
+- Machado ve ark. (2009) matrislerine gecis REDDEDILDI (mimar): mevcut model icin
+  olculmus yeterlilik kaniti var; motor degisimi dogrulanmamis karmasiklik.

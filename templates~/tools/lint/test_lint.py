@@ -47,28 +47,43 @@ class RenkKorluguAyrimi(unittest.TestCase):
     """G6 — simulasyonun GERCEKTEN ayirt ettigi kanit."""
 
     def test_kirmizi_yesil_orani_dusuk(self):
-        """WCAG orani bu cifti yakalar (kayit: dE00 yakalamiyor — asagidaki teste bak)."""
+        """WCAG orani bu cifti PARLAKLIK ekseninde dusuk bulur.
+
+        Kayit: iki metrik farkli sey olcer — oran okunabilirligi (parlaklik farki),
+        dE00 algisal ayrimi. Bu cift oranda dusuk, dE00'da yuksek cikar; ikisi de
+        dogrudur. G6 bu yuzden ciftleri iki ayri olcuye boldu (v1.4.1).
+        """
         kirmizi, yesil = LV.hex_rgb("#D40000"), LV.hex_rgb("#00A000")
         self.assertLess(LV.kontrast(kirmizi, yesil), 3.0)
 
-    def test_kirmizi_yesil_deltae_kapiyi_GECER_bilinen_sinir(self):
-        """KAPININ BILINEN SINIRI — belgelenmis, gizlenmemis olsun diye test.
+    def test_zit_doygun_cift_simde_de_ayrik_kalir_GECER(self):
+        """Zit doygun ciftler simulasyonda da AYIRT EDILIR — kapi dogru gecirir.
 
-        v1.4.1 karariyla tehlike<->vurgu cifti WCAG oranindan CIEDE2000'e tasindi.
-        Olcum (0A-3): klasik kirmizi-yesil cifti dE00 kapisindan GECIYOR —
-        normal 73.70, protanopi 21.20, doteranopi 44.91, tritanopi 47.32; hicbiri
-        2.0'in altina inmiyor. Sebep: buradaki CVD matrisleri (Brettel/Vienot
-        yaklasimi) iki rengi tam BIRLESTIRMIYOR, parlaklik/kroma farki koruyor.
+        Ilk okumada bu "kapinin sinir/eksigi" sanilmisti; mimar denetimi (v1.4.1)
+        olcumle duzeltti: klasik kirmizi-yesil ailesi hicbir parlaklikta cokusmuyor
+        (es-L* ciftlerinde bile protanopi 7-27 bandinda kaliyor). Yani gecirmek
+        ALGISAL OLARAK DOGRUDUR; kapinin isi bu aile degil, karisim metamerleridir
+        (bkz. test_CVD_KILIDI_...). Machado matrislerine gecis onerisi bu olcume
+        dayanarak REDDEDILDI.
 
-        Sonuc: mekanik kapi bu klasik karisikligi YAKALAMAZ; G6'nin ek kurali
-        (renk tek basina bilgi tasiyamaz — bicim/ikon destegi ZORUNLU) bu yuzden
-        vazgecilmezdir. Test, sinirin sessizce unutulmamasi icin vardir.
+        G6'nin ek kurali (renk tek basina bilgi tasiyamaz; bicim/ikon destegi)
+        bagimsiz gerekcelerle ZORUNLU kalir.
         """
         kir, yes = LV.hex_rgb("#D40000"), LV.hex_rgb("#00A000")
         for t in ("protanopi", "doteranopi", "tritanopi"):
             self.assertGreaterEqual(
                 LV.delta_e(LV.cvd_uygula(kir, t), LV.cvd_uygula(yes, t)), 2.0,
-                f"{t}: olcum degisti — kapinin sinir kaydi guncellenmeli")
+                f"{t}: olcum degisti — CVD modeli veya kayit guncellenmeli")
+
+    def test_es_L_kirmizi_yesil_de_cokusmuyor(self):
+        """Mimar denetiminin 1. maddesi: es-parlaklik da cokusu uretmiyor."""
+        for a, b in [("#D40000", "#007A00"), ("#C0504D", "#4F9E3F"),
+                     ("#AA5A50", "#5E9640")]:
+            ra, rb = LV.hex_rgb(a), LV.hex_rgb(b)
+            for t in ("protanopi", "doteranopi"):
+                self.assertGreater(
+                    LV.delta_e(LV.cvd_uygula(ra, t), LV.cvd_uygula(rb, t)), 2.0,
+                    f"{a}/{b} {t}: beklenmedik cokus")
 
     def test_ciede2000_referans_verisi(self):
         """CIEDE2000 dogrulugu — Sharma-Wu-Dalal (2005) yayinlanmis test cifleri.
@@ -145,20 +160,55 @@ class KapiUctanUca(unittest.TestCase):
         self.assertGreater(r.kirmizi, 0,
                            "ayirt edilemeyen gri palet YESIL gecti — kapi olcmuyor")
 
-    def test_ayirt_edilemeyen_sinyal_cifti_KIRMIZI(self):
-        """Once-kirmizi: dE00 kapisi gercekten kirmizi verebiliyor mu?
+    def test_NORMAL_TABAN_ayirt_edilemeyen_cift_KIRMIZI(self):
+        """NORMAL-GORUS TABANI (CVD disleri DEGIL — onun kilidi asagidaki testte).
 
-        tehlike ile vurgu birbirine cok yakin secilirse (dE00 1.20) kapi KIRMIZI
-        vermeli — yoksa kapi her zaman yesil yanan bir susleme olurdu.
+        Bu test yalnizca sunu olcer: iki rol birbirine cok yakin secilirse kapi
+        NORMAL goruste kirmizi verir mi? (dE00 1.20). Kapinin CVD tarafini
+        sinamaz; damgasi bu yuzden 'normal taban'dir (mimar denetimi, v0.1.3).
         """
         palet = {"roller": {
             "arka_plan": "#101418", "ana_ozne": "#40D0F0",
-            "vurgu": "#E74C3C", "tehlike": "#E85142",   # dE00 = 1.20
+            "vurgu": "#E74C3C", "tehlike": "#E85142",   # dE00 = 1.20 (normal)
             "ui_metin": "#FFFFFF", "ui_zemin": "#101418"}}
         r = self._kos(palet)
         de_satirlari = [s for s in r.satirlar if s[0] == "G6-dE"]
-        self.assertTrue(any(s[1] == "KIRMIZI" for s in de_satirlari),
-                        "ayirt edilemeyen sinyal cifti YESIL gecti — dE00 kapisi olcmuyor")
+        normal = [s for s in de_satirlari if s[2].startswith("normal")]
+        self.assertTrue(normal and normal[0][1] == "KIRMIZI",
+                        "normal goruste ayirt edilemeyen cift YESIL gecti")
+
+    def test_CVD_KILIDI_karisim_metameri_protanopide_KIRMIZI(self):
+        """KAPININ CVD DISLERI — asil kilit (mimar karari, v1.4.1/v0.1.3).
+
+        Karisim metameri: normal goruste APAYRI (dE00 83.13) iken protanopide
+        neredeyse AYNI (dE00 1.26) olan cift. Kapi bunu YAKALAMAK ZORUNDA —
+        yakalamazsa CVD tarafi fiilen olu demektir.
+
+        Bu, "kirmizi-yesil ailesini yakalamiyor" gozleminin dogru okunusudur:
+        zit doygun ciftler simulasyonda da gercekten ayirt edilir (kapi onlari
+        gecirir — algisal olarak DOGRU); kapinin isi, normal-gorusun ayirdigi
+        ama dikromatin ayiramadigi ciftleri yakalamaktir. Olculdu: yakaliyor.
+        """
+        palet = {"roller": {
+            "arka_plan": "#101418", "ana_ozne": "#40D0F0",
+            "vurgu": "#33FF00", "tehlike": "#C64040",
+            "ui_metin": "#FFFFFF", "ui_zemin": "#101418"}}
+        r = self._kos(palet)
+        de = [s for s in r.satirlar if s[0] == "G6-dE"]
+
+        normal = [s for s in de if s[2].startswith("normal")]
+        self.assertTrue(normal and normal[0][1] == "YESIL",
+                        "cift normal goruste ayrik olmaliydi (dE00 ~83)")
+
+        prot = [s for s in de if s[2].startswith("protanopi")]
+        self.assertTrue(prot and prot[0][1] == "KIRMIZI",
+                        "protanopide cokusen metamer YESIL gecti — CVD disleri olu")
+
+        # Ham deger de kilitlensin: model degisirse test bunu soyler.
+        th, vu = LV.hex_rgb("#C64040"), LV.hex_rgb("#33FF00")
+        self.assertGreater(LV.delta_e(th, vu), 50.0)
+        self.assertLess(LV.delta_e(LV.cvd_uygula(th, "protanopi"),
+                                   LV.cvd_uygula(vu, "protanopi")), 2.0)
 
     def test_doygun_mavi_turuncu_dort_goruste_YESIL(self):
         """Yanlis-pozitif testi: gercekten ayrik bir doygun cift kapiyi gecmeli."""
