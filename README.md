@@ -1,7 +1,7 @@
 # factory.core
 
 FactoryGames hattının **paylaşılan çalışma zamanı çekirdeği** (UPM paketi) ve
-**oyun reposu iskeleti** (`templates/`).
+**oyun reposu iskeleti** (`templates~/`).
 
 Norm kaynağı: [FactoryGames/docs/PIPELINE.md](https://github.com/serkankaval52-collab/FactoryGames/blob/arena/019fcd97-factorygames/docs/PIPELINE.md).
 Bu repo **oyun bilgisi içermez**; oyunlar ayrı repolardır ve buraya UPM bağımlılığıyla bağlanır.
@@ -35,23 +35,50 @@ Bağ **sürüm etiketine** (`#tag`) yapılır — dalın ucuna değil: oyun kend
 Somut sağlayıcılar (GameAnalytics, AppLovin MAX) çekirdeğe **girmez** — oyun reposu
 kendi uyarlayıcısını takar. Çekirdek yalnız sözleşmeyi ve güvenli varsayılanı taşır.
 
-## Depo şeması kararı (0A adım 3)
+## Depo şeması kararı (0A adım 3 — KAPANDI, v1.4.1)
 
-**Karar:** UPM paketi **repo kökünde** (`package.json` kökte), oyun iskeleti aynı
-repoda `templates/` altında.
+**Karar:** UPM paketi **repo kökünde** (`package.json` kökte), oyun iskeleti aynı repoda
+**`templates~/`** altında. Unity, adı `~` ile biten dizinleri içe aktarmaz; böylece paket
+kökte kalırken iskelet oyun projesine **hiç ithal edilmez** (sıfır ithalat maliyeti),
+ama `git` için sıradan bir dizin olduğundan sürümlenmeye ve etiketlenmeye devam eder.
 
-**Gerekçe:** tek repo = tek sürüm etiketi; `templates/` ile onu besleyen çekirdek aynı
-etikette donar, sürüm kayması olmaz (L4'ün "UPM tam-repo klonu şişmesin" kaygısı,
-oyun deposunun fabrika deposunu klonlamamasıyla zaten karşılanıyor).
+`?path=/Runtime` alternatifi **reddedildi**: repoyu yeniden yapılandırmayı ve her
+tüketicinin bağ satırını değiştirmesini gerektirirken `~` ile aynı sonucu veriyordu.
 
-**Bilinen yan etki (ölçülmüş, gizlenmiyor):** paket kökte olduğu için UPM git-URL ile
-çekildiğinde **repo içeriğinin tamamı** (dolayısıyla `templates/`) paket olarak
-`Library/PackageCache` altına kopyalanır. `templates/` küçük tutulduğu sürece maliyet
-kabul edilebilir; büyürse iki seçenek vardır:
-1. UPM alt dizin desteği: `…factory.core.git?path=/Runtime#v0.x` — paket kökten ayrılır;
-2. `templates/` dizinini Unity'nin göz ardı ettiği `templates~/` adına almak.
+Böylece "paket kökte olduğu için tüm repo `PackageCache`'e kopyalanıyor" borcu kapandı:
+kopyalanan içerik artık Unity tarafından **görünmez** ve derlemeye girmez.
 
-Bu bir **açık borç kaydıdır**; seçim mimarındır (kural 22).
+## Oyun reposunu şablondan kurma (scaffold)
+
+İskelet, oyun projesinin `Library/PackageCache` altındaki paket kopyasından alınır.
+**Sihirli yol yazılmaz** — paket dizini sürüm/hash sonekiyle geldiği için yol çözülür.
+
+**Yol A — Editor script (PackageManager API; en güvenilir):**
+
+```csharp
+using UnityEditor.PackageManager;                 // Editor/ altinda gecici bir script
+var info = PackageInfo.FindForPackageName("com.factorygames.core");
+Debug.Log(info.resolvedPath);                     // .../PackageCache/com.factorygames.core@<hash>
+// iskelet: {resolvedPath}/templates~
+```
+
+**Yol B — kabuk globu (Unity açmadan):**
+
+```powershell
+# Windows / PowerShell — oyun reposunun kokunde
+$pkg = Get-ChildItem Library/PackageCache -Directory -Filter 'com.factorygames.core@*' |
+       Select-Object -First 1
+robocopy "$($pkg.FullName)/templates~" . /E /XD .git
+```
+
+```bash
+# macOS / Linux
+src=$(echo Library/PackageCache/com.factorygames.core@*/templates~)
+cp -R "$src"/. .
+```
+
+Kopyalama sonrası `Packages/manifest.json` içindeki `#v0.x` etiketi, oyunun pinlendiği
+sürüme sabitlenir.
 
 ## Sürümleme
 

@@ -32,3 +32,28 @@ Bu paket [Semantic Versioning](https://semver.org/lang/tr/) kullanır.
 ### Duzeltildi
 - Sablon paletinin kritik ciftleri G6 esigini gecmiyordu (olculdu, taramayla
   degistirildi). Ayrinti: FactoryGames docs/factory/verification/03-v3-esik-saglamasi.md
+
+## [0.1.2] - 2026-08-15
+
+### Degisti
+- `templates/` -> `templates~/`: Unity `~` ile biten dizinleri ithal etmez, boylece
+  paket kokte kalirken iskelet oyun projesine hic girmez. Depo semasi borcu KAPANDI
+  (`?path=/Runtime` alternatifi reddedildi). README'ye scaffold komutlari eklendi
+  (PackageManager API veya kabuk globu — sihirli yol yazilmaz).
+- G6 (mimar karari v1.4.1): `tehlike<->vurgu` cifti WCAG oranindan CIEDE2000'e tasindi
+  (`gorsel_sinyal_deltae_min` = 2.0, `simdilik_tahmin` etiketli). Arka plan ciftleri
+  ve ui_metin esikleri DEGISMEDI. Doygun palet artik geciyor; desature zorlamasi kalkti.
+- `uygulama_boyut_tavan_mb` esiklerden KALDIRILDI (Ek C'de yok — kural 28); BOYUT kapisi
+  artik VERI-YOK + kanit satiri veriyor, "gecti" saymiyor.
+
+### Eklendi
+- CIEDE2000 (sRGB->Lab D65 -> dE00), harici bagimlilik yok; Sharma-Wu-Dalal referans
+  cifleriyle test edildi.
+- Uc yeni oz-test: ayirt edilemeyen sinyal cifti KIRMIZI, doygun mavi/turuncu YESIL,
+  eksik esik VERI-YOK. Ayrica kapinin BILINEN SINIRI belgelendi (kirmizi-yesil cifti
+  dE00 kapisindan gecer — G6 ek kurali bu yuzden zorunlu). Toplam 15 test.
+
+### Duzeltildi
+- `__pycache__` depodan cikarildi ve gitignore'a alindi (kendi HAM-ARTEFAKT
+  disiplinimizin geregi — 0A denetim bulgusu).
+- Lint'lerdeki kapatilmamis dosya tutamaclari (`-W error::ResourceWarning` temiz).

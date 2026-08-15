@@ -113,7 +113,8 @@ def kapi_sahne_baseline(kok, r):
                f"aranan: {rel(kok, bl_yol)}")
         return
     try:
-        bl = json.load(open(bl_yol, encoding="utf-8-sig"))
+        with open(bl_yol, encoding="utf-8-sig") as f:
+            bl = json.load(f)
         limit = int(bl["nesne_sayisi"])
     except (ValueError, KeyError, OSError) as ex:
         r.ekle("SAHNE-BASELINE", "KIRMIZI", f"baseline okunamadi: {type(ex).__name__}", bl_yol)
@@ -152,7 +153,8 @@ def kapi_tek_kaynak(kok, r):
         r.ekle("TEK-KAYNAK", "VERI-YOK", "EditorBuildSettings.asset yok", f"aranan: {rel(kok, yol)}")
         return
     try:
-        metin = open(yol, encoding="utf-8", errors="replace").read()
+        with open(yol, encoding="utf-8", errors="replace") as f:
+            metin = f.read()
     except OSError as ex:
         r.ekle("TEK-KAYNAK", "KIRMIZI", f"okunamadi: {type(ex).__name__}", yol)
         return
@@ -174,7 +176,8 @@ def kapi_preset_sapma(kok, r):
     try:
         # utf-8-sig: Windows araclari (PowerShell Out-File -Encoding utf8) BOM ekler;
         # BOM'lu JSON duz utf-8 okuyucuyu kirar. Lint her iki hali de kabul eder.
-        ref = json.load(open(ref_yol, encoding="utf-8-sig"))
+        with open(ref_yol, encoding="utf-8-sig") as f:
+            ref = json.load(f)
     except (ValueError, OSError) as ex:
         r.ekle("PRESET-SAPMA", "KIRMIZI", f"referans okunamadi: {type(ex).__name__}", ref_yol)
         return
@@ -204,7 +207,8 @@ def kapi_secret(kok, r):
     bulgu = []
     for y in hedefler:
         try:
-            metin = open(y, encoding="utf-8", errors="replace").read()
+            with open(y, encoding="utf-8", errors="replace") as f:
+                metin = f.read()
         except OSError:
             continue
         for ad, desen in SECRET_DESENLERI:
@@ -243,7 +247,14 @@ def kapi_ham_artefakt(kok, r, boyut_tavan_mb):
     # Assets toplamidir.
     assets = [y for y in dosyalar(kok, None) if ".git" + os.sep not in y]
     toplam_mb = sum(os.path.getsize(y) for y in assets) / 1048576 if assets else 0.0
-    if toplam_mb > boyut_tavan_mb:
+    if boyut_tavan_mb is None:
+        # Kural 28: Ek C'de deger yoksa TAHMIN URETILMEZ. Kapi atlanir ama "gecti"
+        # SAYILMAZ (ilk-kosu.md §1) — satir artefakt kanitiyla raporlanir.
+        r.ekle("BOYUT", "VERI-YOK",
+               "uygulama_boyut_tavan_mb esiklerde yok — butce olculemez",
+               f"olculen Assets toplami: {toplam_mb:.1f} MB ({len(assets)} dosya); "
+               f"esik kullanicinin Ek C form donusunden gelecek")
+    elif toplam_mb > boyut_tavan_mb:
         r.ekle("BOYUT", "KIRMIZI",
                f"Assets toplami {toplam_mb:.1f} MB > tavan {boyut_tavan_mb} MB",
                f"{len(assets)} dosya (Ek C uygulama_boyut_tavan_mb)")
@@ -260,7 +271,8 @@ def kapi_dil(kok, r):
     bulgu = []
     for y in kod:
         try:
-            satirlar = open(y, encoding="utf-8", errors="replace").read().splitlines()
+            with open(y, encoding="utf-8", errors="replace") as f:
+                satirlar = f.read().splitlines()
         except OSError:
             continue
         for i, satir in enumerate(satirlar, 1):
@@ -292,7 +304,8 @@ def main() -> int:
 
     esik_yol = args.esikler or os.path.join(kok, "tools", "lint", "esikler.json")
     try:
-        esikler = json.load(open(esik_yol, encoding="utf-8-sig"))
+        with open(esik_yol, encoding="utf-8-sig") as f:
+            esikler = json.load(f)
     except (ValueError, OSError):
         print(f"HATA: esikler okunamadi: {esik_yol} — Ek C'de olmayan sayi kullanilamaz "
               f"(Sozlesme-8), lint kosmaz", file=sys.stderr)
@@ -303,7 +316,8 @@ def main() -> int:
     kapi_tek_kaynak(kok, r)
     kapi_preset_sapma(kok, r)
     kapi_secret(kok, r)
-    kapi_ham_artefakt(kok, r, esikler.get("uygulama_boyut_tavan_mb", 150))
+    # get(...) varsayilani YOK: eksik esik "tahmin" degil VERI-YOK uretir (kural 28)
+    kapi_ham_artefakt(kok, r, esikler.get("uygulama_boyut_tavan_mb"))
     kapi_dil(kok, r)
     r.yaz()
     return 1 if r.kirmizi else 0

@@ -21,6 +21,7 @@ Cikis: 0 = kirmizi yok; 1 = en az bir kirmizi.
 """
 import argparse
 import json
+import math
 import os
 import sys
 
@@ -30,7 +31,11 @@ CVD = {
     "doteranopi": ((0.625, 0.375, 0.0), (0.700, 0.300, 0.0), (0.0, 0.300, 0.700)),
     "tritanopi":  ((0.950, 0.050, 0.0), (0.0, 0.433, 0.567), (0.0, 0.475, 0.525)),
 }
-KRITIK_CIFTLER = [("tehlike", "vurgu"), ("tehlike", "arka_plan"), ("ana_ozne", "arka_plan")]
+# G6 (v1.4.1): iki farkli olcu. Arka plan ciftleri OKUNABILIRLIK sorusudur -> WCAG orani.
+# tehlike<->vurgu ise SINYAL AYRIMI sorusudur -> CIEDE2000 (oran metrigi bu ciftte
+# okunabilirlik vekiliydi ve paleti zorla desature ediyordu; 0A-3 olcumu).
+ORAN_CIFTLERI = [("tehlike", "arka_plan"), ("ana_ozne", "arka_plan")]
+SINYAL_CIFTI = ("tehlike", "vurgu")
 ZORUNLU_ROLLER = ["arka_plan", "ana_ozne", "vurgu", "tehlike", "ui_metin", "ui_zemin"]
 G5_ALANLARI = ["perspektif", "cizgi_kalinligi_bandi", "golge_yonu"]
 P4_DURUMLARI = ["yukleme", "izin_isteme", "ag_hatasi", "bos_icerik", "hata"]
@@ -59,7 +64,8 @@ class Rapor:
 def oku_json(yol):
     try:
         # utf-8-sig: Windows araclari BOM ekleyebilir (0A saha bulgusu)
-        return json.load(open(yol, encoding="utf-8-sig")), None
+        with open(yol, encoding="utf-8-sig") as f:
+            return json.load(f), None
     except FileNotFoundError:
         return None, "dosya yok"
     except (ValueError, OSError) as ex:
@@ -91,6 +97,102 @@ def kontrast(rgb1, rgb2):
 def cvd_uygula(rgb, tur):
     m = CVD[tur]
     return tuple(min(1.0, max(0.0, sum(m[i][j] * rgb[j] for j in range(3)))) for i in range(3))
+
+
+# --------------------------------------------------------------------- CIEDE2000
+# sRGB -> XYZ (D65) -> CIELab -> dE00. Harici bagimlilik YOK (kurulum tablosu disi
+# paket kurulmaz). Referans: CIE 142-2001 / Sharma-Wu-Dalal (2005) test verisiyle
+# test_lint.py'de dogrulanir.
+
+D65 = (0.95047, 1.00000, 1.08883)
+
+
+def _srgb_lin(c):
+    return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
+
+
+def rgb_lab(rgb):
+    r, g, b = (_srgb_lin(c) for c in rgb)
+    x = r * 0.4124564 + g * 0.3575761 + b * 0.1804375
+    y = r * 0.2126729 + g * 0.7151522 + b * 0.0721750
+    z = r * 0.0193339 + g * 0.1191920 + b * 0.9503041
+
+    def f(t):
+        return t ** (1.0 / 3.0) if t > 216.0 / 24389.0 else (841.0 / 108.0) * t + 4.0 / 29.0
+
+    fx, fy, fz = (f(v / w) for v, w in zip((x, y, z), D65))
+    return (116.0 * fy - 16.0, 500.0 * (fx - fy), 200.0 * (fy - fz))
+
+
+def ciede2000(lab1, lab2, kL=1.0, kC=1.0, kH=1.0):
+    """CIE 2000 renk farki (dE00). k carpanlari 1 (gorsel-sozlesme G6)."""
+    L1, a1, b1 = lab1
+    L2, a2, b2 = lab2
+
+    C1 = math.hypot(a1, b1)
+    C2 = math.hypot(a2, b2)
+    Cbar = (C1 + C2) / 2.0
+    C7 = Cbar ** 7
+    G = 0.5 * (1.0 - math.sqrt(C7 / (C7 + 25.0 ** 7))) if C7 else 0.5
+
+    a1p, a2p = (1.0 + G) * a1, (1.0 + G) * a2
+    C1p, C2p = math.hypot(a1p, b1), math.hypot(a2p, b2)
+
+    def hp(ap, bp):
+        if ap == 0.0 and bp == 0.0:
+            return 0.0
+        h = math.degrees(math.atan2(bp, ap))
+        return h + 360.0 if h < 0.0 else h
+
+    h1p, h2p = hp(a1p, b1), hp(a2p, b2)
+
+    dLp = L2 - L1
+    dCp = C2p - C1p
+
+    if C1p * C2p == 0.0:
+        dhp = 0.0
+    elif abs(h2p - h1p) <= 180.0:
+        dhp = h2p - h1p
+    elif h2p - h1p > 180.0:
+        dhp = h2p - h1p - 360.0
+    else:
+        dhp = h2p - h1p + 360.0
+    dHp = 2.0 * math.sqrt(C1p * C2p) * math.sin(math.radians(dhp) / 2.0)
+
+    Lbarp = (L1 + L2) / 2.0
+    Cbarp = (C1p + C2p) / 2.0
+
+    if C1p * C2p == 0.0:
+        hbarp = h1p + h2p
+    elif abs(h1p - h2p) <= 180.0:
+        hbarp = (h1p + h2p) / 2.0
+    elif h1p + h2p < 360.0:
+        hbarp = (h1p + h2p + 360.0) / 2.0
+    else:
+        hbarp = (h1p + h2p - 360.0) / 2.0
+
+    T = (1.0
+         - 0.17 * math.cos(math.radians(hbarp - 30.0))
+         + 0.24 * math.cos(math.radians(2.0 * hbarp))
+         + 0.32 * math.cos(math.radians(3.0 * hbarp + 6.0))
+         - 0.20 * math.cos(math.radians(4.0 * hbarp - 63.0)))
+
+    dtheta = 30.0 * math.exp(-(((hbarp - 275.0) / 25.0) ** 2))
+    Cbarp7 = Cbarp ** 7
+    RC = 2.0 * math.sqrt(Cbarp7 / (Cbarp7 + 25.0 ** 7)) if Cbarp7 else 0.0
+    SL = 1.0 + (0.015 * (Lbarp - 50.0) ** 2) / math.sqrt(20.0 + (Lbarp - 50.0) ** 2)
+    SC = 1.0 + 0.045 * Cbarp
+    SH = 1.0 + 0.015 * Cbarp * T
+    RT = -math.sin(math.radians(2.0 * dtheta)) * RC
+
+    tL = dLp / (kL * SL)
+    tC = dCp / (kC * SC)
+    tH = dHp / (kH * SH)
+    return math.sqrt(tL * tL + tC * tC + tH * tH + RT * tC * tH)
+
+
+def delta_e(rgb1, rgb2):
+    return ciede2000(rgb_lab(rgb1), rgb_lab(rgb2))
 
 
 # --------------------------------------------------------------------------- kapilar
@@ -140,15 +242,31 @@ def kapi_palet(kok, esikler, r):
         else:
             r.ekle("G4", "YESIL", f"{ad}: {oran:.2f} >= {esik}")
 
-    # G6 — renk korlugu: kritik ciftler her simulasyonda esik ustunde kalmali
+    # G6 (a) — arka plan ciftleri: okunabilirlik, her simulasyonda WCAG orani
     for tur in CVD:
-        for a, b in KRITIK_CIFTLER:
+        for a, b in ORAN_CIFTLERI:
             oran = kontrast(cvd_uygula(taban[a], tur), cvd_uygula(taban[b], tur))
             if oran < ana:
-                r.ekle("G6", "KIRMIZI", f"{tur}: {a}/{b} {oran:.2f} < {ana}",
+                r.ekle("G6", "KIRMIZI", f"{tur}: {a}/{b} oran {oran:.2f} < {ana}",
                        "renk TEK BASINA bilgi tasiyamaz (G6)")
             else:
-                r.ekle("G6", "YESIL", f"{tur}: {a}/{b} {oran:.2f} >= {ana}")
+                r.ekle("G6", "YESIL", f"{tur}: {a}/{b} oran {oran:.2f} >= {ana}")
+
+    # G6 (b) — sinyal cifti (tehlike<->vurgu): CIEDE2000, normal + 3 simulasyon
+    de_min = esikler.get("gorsel_sinyal_deltae_min")
+    a, b = SINYAL_CIFTI
+    if de_min is None:
+        r.ekle("G6-dE", "VERI-YOK", "gorsel_sinyal_deltae_min esiklerde yok",
+               "kural 28: Ek C'de olmayan sayi kapida kullanilamaz; kapi 'gecti' SAYILMAZ")
+    else:
+        for ad, c1, c2 in [("normal", taban[a], taban[b])] + \
+                          [(t, cvd_uygula(taban[a], t), cvd_uygula(taban[b], t)) for t in CVD]:
+            de = delta_e(c1, c2)
+            if de < de_min:
+                r.ekle("G6-dE", "KIRMIZI", f"{ad}: {a}/{b} dE00 {de:.2f} < {de_min}",
+                       "sinyal cifti ayirt edilemiyor; biçim/ikon destegi zorunlu (G6 ek kurali)")
+            else:
+                r.ekle("G6-dE", "YESIL", f"{ad}: {a}/{b} dE00 {de:.2f} >= {de_min}")
     return taban
 
 

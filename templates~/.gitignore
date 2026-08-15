@@ -46,3 +46,7 @@ docs/**/*.mp4
 halka/
 .markers/
 runlog/
+
+# Python uretilen (kendi HAM-ARTEFAKT disiplinimizin geregi — 0A denetim bulgusu)
+__pycache__/
+*.pyc

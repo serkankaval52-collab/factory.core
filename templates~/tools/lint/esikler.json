@@ -1,8 +1,9 @@
 {
-  "_kaynak": "FactoryGames docs/appendix/C.md Bolum-1 (Sozlesme-8). Ek C'de OLMAYAN sayi hicbir kapida kullanilamaz; bu dosya Ek C'nin makine-okur kopyasidir. Kullanicinin 0A-6 form donusu Ek C'yi guncelledikce bu dosya da guncellenir.",
+  "_kaynak": "FactoryGames docs/appendix/C.md Bolum-1 (Sozlesme-8). Bu dosya Ek C'nin TAMAMI DEGIL, lint'in TUKETTIGI ALT KUMESIDIR. Ek C'de OLMAYAN sayi hicbir kapida kullanilamaz; kullanicinin 0A-6 form donusu Ek C'yi guncelledikce bu dosya da guncellenir.",
   "_etiketler": {
     "kalibrasyon_adayi": ["gorsel_siluet_fark_orani", "premium_ses_esik_ms", "premium_soguk_acilis_sn"],
-    "aciklama": "kalibrasyon adaylari ilk 3 kosuda olculur; o gune dek VARSAYILAN UYGULANIR, atlanmaz (ilk-kosu.md)"
+    "simdilik_tahmin": ["gorsel_sinyal_deltae_min"],
+    "aciklama": "kalibrasyon adaylari ilk 3 kosuda olculur; o gune dek VARSAYILAN UYGULANIR, atlanmaz (ilk-kosu.md). 'simdilik_tahmin' etiketi kullanici Ek C'ye degeri yazinca DUSER (L8 disiplini)."
   },
 
   "gorsel_palet_disi_piksel_yuzde": 5,
@@ -14,6 +15,7 @@
   "gorsel_siluet_ceper_min": 0.15,
   "gorsel_kontrast_ana_ozne": 3.0,
   "gorsel_kontrast_ui_metin": 4.5,
+  "gorsel_sinyal_deltae_min": 2.0,
   "gorsel_anim_kare_band": [4, 12],
   "gorsel_anim_dongu_ortusme": 90,
 
@@ -32,7 +34,6 @@
   "reklam_arasi_min_sn": 90,
   "reklam_ilk_gun_sifir_turler": ["bulmaca", "mantik"],
 
-  "uygulama_boyut_tavan_mb": 150,
   "ilk_surum_diller": ["en", "tr"],
 
   "ekran_enboy_min": 1.78,

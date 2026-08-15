@@ -46,22 +46,45 @@ class KontrastMatematigi(unittest.TestCase):
 class RenkKorluguAyrimi(unittest.TestCase):
     """G6 — simulasyonun GERCEKTEN ayirt ettigi kanit."""
 
-    def test_kirmizi_yesil_cifti_esigi_gecemez(self):
-        """Klasik kirmizi-yesil ciftini G6 REDDETMELI.
-
-        SAHA DUZELTMESI (0A): ilk yazimda "protanopide kontrast DUSER" varsayilmisti;
-        olculdu ve YANLIS cikti — WCAG kontrasti parlaklik farkina bakar, simulasyon
-        parlaklik degistirdigi icin oran ARTABILIR (D40000/00A000: normal 1.59,
-        protanopi 2.02, doteranopi 3.77). Kapinin gercek gucu baska yerde: bu cift
-        NORMAL goruste zaten esigin altindadir; "renk TEK BASINA bilgi tasiyamaz"
-        (G6 ek kurali) ilkesinin sayisal karsiligi budur.
-        """
+    def test_kirmizi_yesil_orani_dusuk(self):
+        """WCAG orani bu cifti yakalar (kayit: dE00 yakalamiyor — asagidaki teste bak)."""
         kirmizi, yesil = LV.hex_rgb("#D40000"), LV.hex_rgb("#00A000")
-        self.assertLess(LV.kontrast(kirmizi, yesil), 3.0,
-                        "kirmizi-yesil cifti normal goruste esigi gecmemeliydi")
-        dusuk = [t for t in ("protanopi", "doteranopi", "tritanopi")
-                 if LV.kontrast(LV.cvd_uygula(kirmizi, t), LV.cvd_uygula(yesil, t)) < 3.0]
-        self.assertTrue(dusuk, "hicbir simulasyonda esigin altina inmedi")
+        self.assertLess(LV.kontrast(kirmizi, yesil), 3.0)
+
+    def test_kirmizi_yesil_deltae_kapiyi_GECER_bilinen_sinir(self):
+        """KAPININ BILINEN SINIRI — belgelenmis, gizlenmemis olsun diye test.
+
+        v1.4.1 karariyla tehlike<->vurgu cifti WCAG oranindan CIEDE2000'e tasindi.
+        Olcum (0A-3): klasik kirmizi-yesil cifti dE00 kapisindan GECIYOR —
+        normal 73.70, protanopi 21.20, doteranopi 44.91, tritanopi 47.32; hicbiri
+        2.0'in altina inmiyor. Sebep: buradaki CVD matrisleri (Brettel/Vienot
+        yaklasimi) iki rengi tam BIRLESTIRMIYOR, parlaklik/kroma farki koruyor.
+
+        Sonuc: mekanik kapi bu klasik karisikligi YAKALAMAZ; G6'nin ek kurali
+        (renk tek basina bilgi tasiyamaz — bicim/ikon destegi ZORUNLU) bu yuzden
+        vazgecilmezdir. Test, sinirin sessizce unutulmamasi icin vardir.
+        """
+        kir, yes = LV.hex_rgb("#D40000"), LV.hex_rgb("#00A000")
+        for t in ("protanopi", "doteranopi", "tritanopi"):
+            self.assertGreaterEqual(
+                LV.delta_e(LV.cvd_uygula(kir, t), LV.cvd_uygula(yes, t)), 2.0,
+                f"{t}: olcum degisti — kapinin sinir kaydi guncellenmeli")
+
+    def test_ciede2000_referans_verisi(self):
+        """CIEDE2000 dogrulugu — Sharma-Wu-Dalal (2005) yayinlanmis test cifleri.
+
+        Not (durustluk kaydi): ilk denemede Pair 8 ile Pair 12 karistirilarak yanlis
+        beklenen deger yazilmis ve implementasyon hatali sanilmisti; dogru esleme ile
+        besi de birebir tutuyor.
+        """
+        for lab1, lab2, beklenen in [
+            ((50.0, 2.6772, -79.7751), (50.0, 0.0, -82.7485), 2.0425),
+            ((50.0, 2.49, -0.001), (50.0, -2.49, 0.0009), 7.1792),
+            ((50.0, -0.001, 2.49), (50.0, 0.0009, -2.49), 4.8045),
+            ((50.0, 0.0, 0.0), (50.0, -1.0, 2.0), 2.3669),
+            ((50.0, 2.5, 0.0), (73.0, 25.0, -18.0), 27.1492),
+        ]:
+            self.assertAlmostEqual(LV.ciede2000(lab1, lab2), beklenen, places=3)
 
     def test_mavi_sari_protanopide_ayrik_kalir(self):
         mavi, sari = LV.hex_rgb("#0050C8"), LV.hex_rgb("#FFD200")
@@ -78,6 +101,7 @@ class KapiUctanUca(unittest.TestCase):
         "gorsel_palet_kademe": 5,
         "gorsel_kontrast_ana_ozne": 3.0,
         "gorsel_kontrast_ui_metin": 4.5,
+        "gorsel_sinyal_deltae_min": 2.0,
         "gorsel_anim_kare_band": [4, 12],
         "gorsel_anim_dongu_ortusme": 90,
         "gorsel_alpha_sacak_yuzde": 2,
@@ -88,14 +112,15 @@ class KapiUctanUca(unittest.TestCase):
         "uygulama_boyut_tavan_mb": 150,
     }
 
-    # Bu palet TARAMAYLA bulundu, elle secilmedi (0A adim 3 / V3 yerine gecen olcum):
-    # ilk sezgisel aday (#101418/#40D0F0/#FFD200/#FF5A5A) uc simulasyonda da DUSTU —
-    # tehlike/vurgu ikisi de parlak oldugu icin oran 1.04-2.11 bandinda kaldi.
-    # Gecen palet dusuk doygunluklu tonlar kullanir; ayrinti:
-    # FactoryGames docs/factory/verification/03-v3-esik-saglamasi.md
+    # DOYGUN palet — v1.4.1 kararinin sinavi. Bu palet WCAG-oran kapisinda (eski G6)
+    # tehlike/vurgu yuzunden 4/4 DUSUYORDU; dE00 kapisinda GECMELI. Olculdu (0A-3):
+    #   tehlike/vurgu dE00 -> normal 49.42 · prot 15.23 · dote 10.70 · trit 2.55
+    #   tehlike/arka  oran -> prot 8.79 · dote 10.91 · trit 5.70
+    #   ana_ozne/arka oran -> prot 5.46 · dote 4.50 · trit 11.51
+    # Yani karar, doygun paleti serbest birakti; desature zorlamasi kalkti.
     IYI_PALET = {"roller": {
-        "arka_plan": "#1A0D0D", "ana_ozne": "#4C998C", "vurgu": "#FFD480",
-        "tehlike": "#994C4C", "ui_metin": "#FFFFFF", "ui_zemin": "#1A0D0D"}}
+        "arka_plan": "#101418", "ana_ozne": "#40D0F0", "vurgu": "#FFD200",
+        "tehlike": "#FF5A5A", "ui_metin": "#FFFFFF", "ui_zemin": "#101418"}}
 
     KOTU_PALET = {"roller": {
         "arka_plan": "#808080", "ana_ozne": "#8A8A8A", "vurgu": "#8F8F8F",
@@ -119,6 +144,44 @@ class KapiUctanUca(unittest.TestCase):
         r = self._kos(self.KOTU_PALET)
         self.assertGreater(r.kirmizi, 0,
                            "ayirt edilemeyen gri palet YESIL gecti — kapi olcmuyor")
+
+    def test_ayirt_edilemeyen_sinyal_cifti_KIRMIZI(self):
+        """Once-kirmizi: dE00 kapisi gercekten kirmizi verebiliyor mu?
+
+        tehlike ile vurgu birbirine cok yakin secilirse (dE00 1.20) kapi KIRMIZI
+        vermeli — yoksa kapi her zaman yesil yanan bir susleme olurdu.
+        """
+        palet = {"roller": {
+            "arka_plan": "#101418", "ana_ozne": "#40D0F0",
+            "vurgu": "#E74C3C", "tehlike": "#E85142",   # dE00 = 1.20
+            "ui_metin": "#FFFFFF", "ui_zemin": "#101418"}}
+        r = self._kos(palet)
+        de_satirlari = [s for s in r.satirlar if s[0] == "G6-dE"]
+        self.assertTrue(any(s[1] == "KIRMIZI" for s in de_satirlari),
+                        "ayirt edilemeyen sinyal cifti YESIL gecti — dE00 kapisi olcmuyor")
+
+    def test_doygun_mavi_turuncu_dort_goruste_YESIL(self):
+        """Yanlis-pozitif testi: gercekten ayrik bir doygun cift kapiyi gecmeli."""
+        mavi, turuncu = LV.hex_rgb("#1E5AFF"), LV.hex_rgb("#FF7A1E")
+        self.assertGreaterEqual(LV.delta_e(mavi, turuncu), 2.0, "normal gorus")
+        for t in ("protanopi", "doteranopi", "tritanopi"):
+            self.assertGreaterEqual(
+                LV.delta_e(LV.cvd_uygula(mavi, t), LV.cvd_uygula(turuncu, t)), 2.0, t)
+
+    def test_deltae_esigi_yoksa_veri_yok(self):
+        """Kural 28: esik yoksa tahmin uretilmez, kapi 'gecti' de sayilmaz."""
+        esikler = dict(self.ESIKLER)
+        esikler.pop("gorsel_sinyal_deltae_min")
+        with tempfile.TemporaryDirectory() as kok:
+            sa = os.path.join(kok, "Assets", "StreamingAssets")
+            os.makedirs(sa)
+            with open(os.path.join(sa, "palette.json"), "w", encoding="utf-8") as f:
+                json.dump(self.IYI_PALET, f)
+            r = LV.Rapor()
+            LV.kapi_palet(kok, esikler, r)
+            de = [s for s in r.satirlar if s[0] == "G6-dE"]
+            self.assertTrue(de and de[0][1] == "VERI-YOK", "eksik esik sessizce gecti")
+            self.assertTrue(de[0][3], "VERI-YOK satiri kanitsiz")
 
     def test_palet_yoksa_veri_yok_ve_kanit(self):
         with tempfile.TemporaryDirectory() as kok:
