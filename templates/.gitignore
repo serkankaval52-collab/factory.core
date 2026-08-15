@@ -1,0 +1,48 @@
+# Unity uretilen dizinler (yeniden uretilebilir — depoya girmez)
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Mm]emoryCaptures/
+[Uu]serSettings/
+.vs/
+.vscode/
+*.csproj
+*.sln
+*.user
+*.pidb
+*.booproj
+*.svd
+*.unityproj
+
+# .NET test ciktilari
+bin/
+[Tt]est[Rr]esults/
+
+# Uygulama paketleri ve semboller (artefakt — cihazda/CI'da kalir)
+*.apk
+*.aab
+*.ipa
+*.app
+*.unitypackage
+*.dSYM*
+
+# Kanit/dokuman duzlemine ham artefakt girmez (Sozlesme-4).
+# DIKKAT: Assets/ altindaki oyun varliklari (sprite, ses) BU KURALIN DISINDADIR —
+# onlar G1-G2/S1 kapilarina tabidir, gitignore ile gizlenmez.
+/*.png
+/*.jpg
+/*.jpeg
+/*.gif
+/*.mp4
+/*.mov
+docs/**/*.png
+docs/**/*.jpg
+docs/**/*.mp4
+
+# Yerel calisma kopyalari
+halka/
+.markers/
+runlog/
