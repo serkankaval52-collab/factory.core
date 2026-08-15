@@ -74,3 +74,18 @@ Bu paket [Semantic Versioning](https://semver.org/lang/tr/) kullanır.
 ### Karar kaydi
 - Machado ve ark. (2009) matrislerine gecis REDDEDILDI (mimar): mevcut model icin
   olculmus yeterlilik kaniti var; motor degisimi dogrulanmamis karmasiklik.
+
+## [0.1.4] - 2026-08-15
+
+### Duzeltildi
+- DIL-KAPISI kapsami daraltildi (0A adim 4 saha bulgusu): `Assets/Editor/` ve
+  `Assets/Tests/` haric tutuldu — ikisi de oyuncuya ULASMAZ (Editor build'e girmez,
+  testler UNITY_INCLUDE_TESTS kisitiyla derlenmez). `throw` mesajlari ve attribute
+  metinleri de gelistirici yuzeyi sayildi. Hello-build'de 18 yanlis pozitif uretiyordu.
+- `EsiklerTests.ZORUNLU_ALANLAR` listesinden `uygulama_boyut_tavan_mb` cikarildi:
+  v0.1.2'de esikten silinmisti ama sablon testi guncellenmemisti — hello-build zinciri
+  bu yan etkiyi yakaladi (sablonun ise yaradiginin kaniti).
+
+### Bilinen sinir (kayitli)
+- DIL-KAPISI tek kelimelik gorunur dizeleri elemez; cok kelime kurali teknik dizeleri
+  yanlis pozitiften korumak icindir. Bosluk kabul edilmis ve rapora yazilmistir.

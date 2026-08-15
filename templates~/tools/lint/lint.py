@@ -264,9 +264,25 @@ def kapi_ham_artefakt(kok, r, boyut_tavan_mb):
 
 
 def kapi_dil(kok, r):
-    kod = dosyalar(kok, KOD_UZANTILARI)
+    """A3.6 — kullaniciya GORUNEN metin koda gomulmez.
+
+    Kapsam ayrimi (0A adim 4 saha bulgusu): ilk hali `Assets/Editor/` ve
+    `Assets/Tests/` altindaki dosyalari da kirmizi yakiyordu. Ikisi de OYUNCUYA
+    ULASMAZ — Editor kodu build'e girmez, test takimlari `UNITY_INCLUDE_TESTS`
+    kisitiyla derlenmez. Ayni sekilde `throw` mesajlari ve attribute metinleri
+    gelistirici yuzeyidir. Kapi artik yalnizca CALISMA ZAMANI kodunu arar.
+
+    BILINEN SINIR (kayitli): tek kelimelik gorunur dizeler ("Skor", "Basla")
+    elenmez — cok kelime kurali teknik dizeleri (yol, tur adi, sabit) yanlis
+    pozitiften korumak icin var. Bu bosluk kabul edilmis ve rapora yazilmistir.
+    """
+    kod = [y for y in dosyalar(kok, KOD_UZANTILARI)
+           if "/Editor/" not in "/" + rel(kok, y)
+           and "/Tests/" not in "/" + rel(kok, y)]
     if not kod:
-        r.ekle("DIL-KAPISI", "VERI-YOK", "hic .cs dosyasi yok", "taranan: Assets/**, bulunan: 0")
+        r.ekle("DIL-KAPISI", "VERI-YOK",
+               "taranacak runtime .cs dosyasi yok",
+               "taranan: Assets/** (Editor/ haric), bulunan: 0")
         return
     bulgu = []
     for y in kod:
@@ -279,7 +295,11 @@ def kapi_dil(kok, r):
             s = satir.strip()
             if s.startswith("//") or s.startswith("*") or s.startswith("///"):
                 continue
-            if "nameof(" in s or "[Tooltip" in s or "Debug.Log" in s:
+            # Gelistirici yuzeyi — oyuncuya gorunmez: attribute metni, istisna
+            # mesaji, gelistirme logu, nameof, Tooltip.
+            if s.startswith("[") or "throw new" in s or "Exception(" in s:
+                continue
+            if "nameof(" in s or "[Tooltip" in s or "Debug.Log" in s or "Assert" in s:
                 continue
             for m in KULLANICI_METNI.finditer(satir):
                 metin = m.group(1)

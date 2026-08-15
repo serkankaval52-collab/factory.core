@@ -26,8 +26,10 @@ namespace Game.Core.Tests
             "ses_tepe_dbtp",
             "premium_gecis_sure_band",
             "premium_kare_hizi_secenek",
-            "uygulama_boyut_tavan_mb",
             "ilk_surum_diller",
+            // NOT: `uygulama_boyut_tavan_mb` bu listede DEGILDIR — Ek C'de degeri yok
+            // (kural 28). Eksikligi lint tarafinda VERI-YOK satiri uretir; kullanicinin
+            // 0A-6 form donusu geldiginde hem esikler.json'a hem buraya eklenir.
         };
 
         private static string EsiklerYolu()
