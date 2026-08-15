@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "com.factorygames.core": "https://github.com/serkankaval52-collab/factory.core.git#v0.1.7",
+    "com.factorygames.core": "https://github.com/serkankaval52-collab/factory.core.git#v0.1.8",
     "com.unity.2d.animation": "10.1.4",
     "com.unity.2d.psdimporter": "10.0.0",
     "com.unity.2d.sprite": "1.0.0",

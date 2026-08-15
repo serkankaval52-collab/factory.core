@@ -121,3 +121,22 @@ Bu paket [Semantic Versioning](https://semver.org/lang/tr/) kullanır.
   1. `sha256` artik SATIR SONU NORMALIZE ediyor (CRLF/CR -> LF) — platform bagimsiz;
   2. `.gitattributes` eklendi (`eol=lf`) — kaynak tek bicimde tutuluyor.
   `preset-hashes.json` normalize hash'lerle yeniden uretildi (37 dosya).
+
+## [0.1.8] - 2026-08-15
+
+### Degisti — preset artik KANONIK hal
+- Preset seti, sablondan cikarildiktan sonra pinli Unity ile BIR KEZ acilip kapatilarak
+  kanonik hale getirildi. Gerekce: Unity 6000.3.16f1, 6000.1 hedefli sablonun asset
+  semalarini acilista guncelliyor (ProjectSettings'e androidDisplayOptions /
+  audioSpatialExperience, DefaultVolumeProfile'a eksik override'lar, GraphicsSettings'e
+  m_ShaderBuildSettings). Ham sablondan uretilen preset ile her oyun projesi ILK
+  ACILISTA sapardi -> PRESET-SAPMA kapisi surekli kirmizi yanar ve ilk haftada bypass
+  edilirdi (0A adim 5'in kendi gerekcesi).
+- `packages-lock.json` presete eklendi: cozumlenmis paket surumleri kilitlenir.
+- `ProjectVersion.txt` presetten CIKARILDI — oyun pini oyunun kendisindedir.
+
+### Duzeltme kaydi (durustluk)
+- v0.1.7'de PRESET-SAPMA yanlis pozitifi CRLF/LF farkina baglanmisti. Normalize hash
+  ve .gitattributes eklendi ama sapma SURDU: gercek neden yukaridaki sema guncellemesiydi.
+  Ilk teshis YANLISTI. Normalize hash + .gitattributes yine de KALIYOR (ileriye donuk
+  onlem), ancak gerekcesi duzeltildi.
