@@ -1,0 +1,10 @@
+{
+  "name": "com.factorygames.core",
+  "version": "0.1.0",
+  "displayName": "FactoryGames Core",
+  "description": "Fabrika hattinin paylasilan calisma zamani cekirdegi: kod-oncelikli sahne kurulumu, StreamingAssets JSON yukleyici, telemetri yazici ve analitik/reklam gecitleri. Oyun bilgisi ICERMEZ.",
+  "unity": "6000.0",
+  "keywords": ["factorygames", "bootstrap", "telemetry"],
+  "author": { "name": "FactoryGames" },
+  "hideInEditor": false
+}
