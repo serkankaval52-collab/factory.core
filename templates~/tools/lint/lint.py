@@ -93,14 +93,21 @@ def gameobject_sayisi(yol):
 
 
 def sha256(yol):
-    h = hashlib.sha256()
+    """Satir sonu NORMALIZE edilmis sha256 (CRLF/CR -> LF).
+
+    Gerekce (0A adim 4 saha bulgusu): ham sha256 platformlar arasi calismiyordu.
+    Hash'ler Windows'ta CRLF'li calisma kopyasindan uretilmis, CI (Linux) ise ayni
+    dosyalari LF ile checkout etmisti — 7 preset dosyasi "sapti" gorundu. Dosyalar
+    AYNIYDI; sapan sey satir sonuydu. Preset dosyalarinin tamami metindir; normalize
+    hash hem yanlis pozitifi keser hem gercek icerik degisikligini yakalamaya devam eder.
+    """
     try:
         with open(yol, "rb") as f:
-            for blok in iter(lambda: f.read(65536), b""):
-                h.update(blok)
+            veri = f.read()
     except OSError:
         return None
-    return h.hexdigest()
+    veri = veri.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+    return hashlib.sha256(veri).hexdigest()
 
 
 # --------------------------------------------------------------------------- kapilar

@@ -111,3 +111,13 @@ Bu paket [Semantic Versioning](https://semver.org/lang/tr/) kullanır.
   acikca korunuyor.
 - `.utmp/` (Android build gecici agaci) ignore edilmiyordu ve MAKINE YOLU iceriyor —
   PII sizintisi riskiydi; staged dosya sayisi 128'den 86'ya dustu.
+
+## [0.1.7] - 2026-08-15
+
+### Duzeltildi (CI'nin yakaladigi platform kusuru)
+- PRESET-SAPMA kapisi CI'da 7 YANLIS POZITIF verdi: hash'ler Windows calisma
+  kopyasindan (CRLF) uretilmis, Linux runner LF ile checkout etmisti. Dosyalar
+  ayniydi; sapan sey satir sonuydu. Iki katmanli duzeltme:
+  1. `sha256` artik SATIR SONU NORMALIZE ediyor (CRLF/CR -> LF) — platform bagimsiz;
+  2. `.gitattributes` eklendi (`eol=lf`) — kaynak tek bicimde tutuluyor.
+  `preset-hashes.json` normalize hash'lerle yeniden uretildi (37 dosya).
